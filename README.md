@@ -1,14 +1,15 @@
 
-# Step 1: Download SD Card Image
+## Step 1: Download SD Card Image
 
-bone-debian-9.5-lxqt-armhf-2018-10-07-4gb.img.xz
+`bone-debian-9.5-lxqt-armhf-2018-10-07-4gb.img.xz`
 
-# Step 2: Flash onto SD Card
+## Step 2: Flash onto SD Card
 
-# Step 3: Share Internet b/w Host and BBB
+## Step 3: Share Internet b/w Host and BBB
 
-# Step 4: Boot BBB & update libraries
+## Step 4: Boot BBB & update libraries
 
+```sh
 ssh debian@192.168.7.2
 
 sudo /opt/scripts/tools/grow_partition.sh
@@ -23,62 +24,119 @@ sudo apt install libgles2-mesa-dev
 
 sudo nano /etc/sudoers
 debian ALL= NOPASSWD:/usr/bin/rsync
+```
 
-# Step 5: Sync Sysroot from BBB to Host
+## Step 5: Sync Sysroot from BBB to Host
 
+```sh
 docker build -t qt-test-image .
 docker run --rm -v ${PWD}:/usr/app -v ${PWD}/workspace:/workspace -v ${PWD}/scripts:/scripts qt-test-image /usr/app/syncSysroot.sh
+```
 
-# Step 6: Start cross-compiling Qt
+## Step 6: Start cross-compiling Qt
 
+```sh
 docker build -t qt-test-image .
 docker run --rm -v ${PWD}:/usr/app -v ${PWD}/workspace:/workspace -v ${PWD}/scripts:/scripts qt-test-image /usr/app/buildQt.sh
+```
 
-# Step 7: Sync Qt from Host to BBB
+## Step 7: Sync Qt from Host to BBB
 
+```sh
 docker build -t qt-test-image .
 docker run --rm -v ${PWD}:/usr/app -v ${PWD}/workspace:/workspace -v ${PWD}/scripts:/scripts qt-test-image /usr/app/syncQtToSysroot.sh
+```
 
-# Step 8a: Configuring Qt Creator
+## Step 8a: Configuring Qt Creator
+
+* /workspace/OUTPUT/qt5
+* /workspace/OUTPUT/qt5host
+* /workspace/sysroot
+
+
+```sh
+Dislabe Logout so that dont get black screen
+
+sudo apt install gdb-multiarch
+sudo apt install xfce4 xfce4-goodies
+sudo apt install tightvncserver
+
+~/.vnc/xstartup
+#!/bin/bash
+xrdb $HOME/.Xresources
+startxfce4 &
+
+sudo xvncserver
+```
+
+
+```sh
+rsync -avzn --progress --list-only --include 'workspace/' --include 'workspace/OUTPUT/***' --include 'worksprace/sysroot/***' --exclude '*'  /home/wahab/Qt/workspace /home/wahab/Test
+sudo rsync -avz --progress --include 'workspace/' --include 'workspace/OUTPUT/***' --exclude '*'  /home/wahab/Qt/workspace /
+sudo rsync -avz --progress --include 'workspace/' --include 'workspace/sysroot/***' --exclude '*'  /home/wahab/Qt/workspace /
+```
+
+Tightvncserver localhost:5900
 
 To use Qt Creator properly, you must configure the "Qt Version" and "Tool Chains" sections.
 
-Tool Chain Settings[edit] go to Tools -> Options..-> Build & Run -> Compilers tab. click in "Add -> GCC". On "Compiler Path" set to "/home/<you>/opt/gcc-linaro-4.9-2015.05-x86_64_arm-linux-gnueabihf/bin/arm-linux-gnueabihf-g++". Name it "ARM GCC" or similar. obs: Adjust it to your username.
+Sysroot: /workspace/sysroot
 
-Qt Version settings.[edit] Now go to Tools -> Options..-> Build & Run -> Qt Versions tab. Click in "Add.." and choose you qmake for raspberry "~/workspace/OUTPUT/qt5host/bin/qmake".
+Tool Chain Settings[edit] go to Tools -> Options..-> Build & Run -> Compilers tab. click in "Add -> GCC". On "Compiler Path" set to "/usr/bin/arm-linux-gnueabihf-g++". Name it "ARM GCC" or similar. obs: Adjust it to your username.
+
+Qt Version settings.[edit] Now go to Tools -> Options..-> Build & Run -> Qt Versions tab. Click in "Add.." and choose you qmake for bbb "/workspace/OUTPUT/qt5host/bin/qmake".
 
 Configure Linux Devices[edit] Go to Tools -> Options…-> Devices -> Devices tab.
 
 Add a new configuration setting a "Generic Linux Device" Hostname or IP address is the IP of your BBB user is debian password is temppwd. if your not did change it.
 
-# Step 8b: Configuring QMake
+Update CMake => Use Sysroot
 
+* CMAKE_PREFIX_PATH:STRING=%{Qt:QT_INSTALL_PREFIX}
+
+    From first one, CMake will get path to cmake module for Qt5
+* CMAKE_SYSROOT:STRING=%{SysRoot:FilePath}
+
+    From second one, CMake will search for libraries Qt is dependent on from sysroot
+
+## Step 8b: Configuring QMake
+
+```sh
 docker build -t qt-test-image .
 docker run --rm -v ${PWD}:/usr/app -v ${PWD}/workspace:/workspace -v ${PWD}/scripts:/scripts -v ${PWD}/App:/App qt-test-image /usr/app/buildApp.sh
+```
 
-# Step 8c: Configuring CMake
+## Step 8c: Configuring CMake
 
+```sh
 docker build -t qt-test-image .
 docker run --rm -v ${PWD}:/usr/app -v ${PWD}/workspace:/workspace -v ${PWD}/scripts:/scripts -v ${PWD}/App:/App qt-test-image /usr/app/buildAppCMake.sh
+```
 
-# Step 9b: Sync App (qmake) to Sysroot
+## Step 9b: Sync App (qmake) to Sysroot
 
+```sh
 docker build -t qt-test-image .
 docker run --rm -v ${PWD}:/usr/app -v ${PWD}/workspace:/workspace -v ${PWD}/scripts:/scripts -v ${PWD}/App:/App qt-test-image /usr/app/syncAppToSysroot.sh
+```
 
-# Step 9c: Sync App (cmake) to Sysroot
+## Step 9c: Sync App (cmake) to Sysroot
 
+```sh
 docker build -t qt-test-image .
 docker run --rm -v ${PWD}:/usr/app -v ${PWD}/workspace:/workspace -v ${PWD}/scripts:/scripts -v ${PWD}/App:/App qt-test-image /usr/app/syncAppCMakeToSysroot.sh
+```
 
-# Step 10a: Start App (qt creator) on BBB
+## Step 10a: Start App (qt creator) on BBB
 
-# Step 10b: Start App (qmake) on BBB
+## Step 10b: Start App (qmake) on BBB
 
 Available platform plugins are: linuxfb, minimal, offscreen, vnc, webgl, xcb.
 
+```sh
 cd /home/debian/cross_build
 sudo ./scratchpad -platform vnc
+```
 
 Tigervnc 192.168.7.2:5900
 
@@ -87,16 +145,20 @@ DISPLAY=:0.0 ./scratchpad  -platform xcb
 bbb-4dcape70t.dtb
 am335x-boneblack-4dcape-43t.dtb
 
-# Step 10c: Start App (cmake) on BBB
+## Step 10c: Start App (cmake) on BBB
 
+```sh
 cd /home/debian/build_cross_cmake
 sudo ./scratchpadcmake -platform vnc
+```
 
 Tigervnc 192.168.7.2:5900
 
-# Step 10d: Start App (amd64 cmake or qmake) in WSL
+## Step 10d: Start App (amd64 cmake or qmake) in WSL
 
+```sh
 ~/App/build$ ./scratchpad -platform vnc
+```
 Tigervnc (ip addr) 5900
 
 or
@@ -107,7 +169,7 @@ vncserver :2
 EXPORT=172.28.97.153:2 ./scratchpad
 
 
-# Tips
+## Tips
 
 * To log into contianer
 docker run --rm -v ${PWD}:/usr/app -v ${PWD}/workspace:/workspace -v ${PWD}/scripts:/scripts -v ${PWD}/App:/App -it qt-test-image /bin/bash
@@ -143,7 +205,7 @@ the make install step targets the directory specified by extprefix
 
 hostprefix => allows separating host tools like qmake, rcc, uicm , moc from the binaries for the target. When given, such tools will be installed under the specified directory instead of extprefix.
 
-# Msys (g++) on Windows
+## Msys (g++) on Windows
 
 C:\Qt\SOURCES\qtbase\configure -platform win32-g++                                     -release -opengl es2 -device linux-beaglebone-g++ -sysroot C:/SysGCC/beaglebone/arm-linux-gnueabihf/sysroot -prefix /usr/local/qt5 -v
 
@@ -156,14 +218,15 @@ C:\Qt\SOURCES\qtbase\configure -platform win32-g++ -xplatform linux-arm-gnueabih
 C:\Qt\SOURCES\configure       -platform win32-g++ -xplatform linux-arm-gnueabihf-g++ -release -opengl es2                               -sysroot C:/SysGCC/beaglebone/arm-linux-gnueabihf/sysroot -prefix /usr/local/qt5 -device-option CROSS_COMPILE=C:/SysGCC/beaglebone/bin/arm-linux-gnueabihf- -qt-xcb  -v
 
 
-# TODO
+## TODO
 
 * Remove duplication of variables
 * Split Qt creator (DownloadSourceCode, Configure ,Compile & Install)
 * Move all shell scripts under scripts folder
+* May be add LD_LIBRARY_PATH to BBB and remove the rpath in cmake command
 
 
-# Links
+## Links
 
 * https://elinux.org/Beagleboard:Expanding_File_System_Partition_On_A_microSD
 * https://doc.qt.io/qt-5/configure-linux-device.html
@@ -189,3 +252,12 @@ C:\Qt\SOURCES\configure       -platform win32-g++ -xplatform linux-arm-gnueabihf
 * https://crashingdaily.wordpress.com/2007/06/29/rsync-and-sudo-over-ssh/
 * https://gitlab.kitware.com/cmake/community/-/wikis/doc/cmake/RPATH-handling
 * https://packages.debian.org/stretch/amd64/libgles2-mesa-dev/filelist
+* https://stackoverflow.com/questions/15687755/how-to-use-rsync-to-copy-only-specific-subdirectories-same-names-in-several-dir
+* https://www.digitalocean.com/community/tutorials/how-to-install-and-configure-vnc-on-debian-9
+* https://www.tweaking4all.com/software/linux-software/use-xrdp-remote-access-ubuntu-14-04/
+* https://dev.to/darksmile92/linux-on-windows-wsl-with-desktop-environment-via-rdp-522g
+* https://www.tenforums.com/tutorials/144208-windows-subsystem-linux-add-desktop-experience-ubuntu.html
+* https://www.reddit.com/r/bashonubuntuonwindows/comments/6ysgn4/guide_to_xfce4_install_in_wsl_for_advanced_noobs/
+* https://wiki.parabola.nu/TightVNC
+* https://autoize.com/xfce4-desktop-environment-and-x-server-for-ubuntu-on-wsl-2/
+* https://github.com/TigerVNC/tigervnc/issues/684#issuecomment-561605793

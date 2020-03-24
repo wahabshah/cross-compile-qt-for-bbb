@@ -99,6 +99,9 @@ Update CMake => Use Sysroot
 
     From second one, CMake will search for libraries Qt is dependent on from sysroot
 
+![](./Kit.JPG)
+![](./CMake.JPG)
+
 ## Step 8b: Configuring QMake
 
 ```sh

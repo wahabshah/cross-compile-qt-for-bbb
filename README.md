@@ -264,3 +264,5 @@ C:\Qt\SOURCES\configure       -platform win32-g++ -xplatform linux-arm-gnueabihf
 * https://wiki.parabola.nu/TightVNC
 * https://autoize.com/xfce4-desktop-environment-and-x-server-for-ubuntu-on-wsl-2/
 * https://github.com/TigerVNC/tigervnc/issues/684#issuecomment-561605793
+* https://www.qt.io/blog/creating-an-embedded-qt-quick-application-in-visual-studio-2/2 => Use WSL to cross compile and debug both C++ and QML on device using Visual Studio
+* https://embeddeduse.com/2020/11/21/cross-compiling-qt-embedded-applications-with-qtcreator-and-cmake/ => BEST how to use CMake with qtcreator as to what is needed to debug

@@ -7,6 +7,8 @@
 
 ## Step 3: Share Internet b/w Host and BBB
 
+https://gist.github.com/wahabshah/9c19af6c2960c60dfd8b28ecd4556c01
+
 ## Step 4: Boot BBB & update libraries
 
 ```sh
